@@ -1,1 +1,1 @@
-web: uvicorn fastapi_test.main:app --host 0.0.0.0 --port $PORT
+web: uvicorn fastapi_test.helloworld:app --host 0.0.0.0 --port ${PORT}
