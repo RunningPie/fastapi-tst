@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from router_member import router_member
+from router_protected import router_protected
 
 app = FastAPI()
 
@@ -9,3 +10,4 @@ async def hello() -> dict:
             "guide": "go to fastapi-test-two.vercel.app/docs to see full documentation on what you can do with this simple fastapi app"}
 
 app.include_router(router_member)
+app.include_router(router_protected)
