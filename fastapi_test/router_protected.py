@@ -1,31 +1,61 @@
 from fastapi import APIRouter, HTTPException, Security
 from fastapi.security import APIKeyHeader
 import json
+import secrets
+from datetime import *
 
 router_protected = APIRouter()
 
-api_key_header = APIKeyHeader(name="Dama-API-Key")
+api_key_header = APIKeyHeader(name="X-API-Key")
+user_keys = {}
 
-with open("api_keys.json") as read_file:
-    api_keys = json.load(read_file)
 
-print(api_keys)
-def get_api_key(api_key_header:str = Security(api_key_header)) -> bool:
-    if api_key_header in api_keys:
-        return api_keys[api_key_header]
-    else:    
-        raise HTTPException(status_code=401, detail="Invalid API Key")
+@router_protected.get("/get-api-key/{username}")
+def key_request(username: str) -> dict:
+    global user_keys
+    with open("user_keys.json") as read_file:
+        user_keys = json.load(read_file)
     
-@router_protected.get("/protected-endpoint")
-def protected_endpoint(api_key: str = Security(get_api_key)):
-    with open("data_tasks.json") as read_file:
-            data_tasks = json.load(read_file)
-        
-    response = []
-    for task in data_tasks:
-        for task_key, task_value in task.items():
-            # print(f"task_key: {task_key}, task_value: {task_value}, api_key: {api_key}")
-            # Check if the task key starts with the API key prefix
-            if task_key.startswith(api_key):
-                response.append(task_value)
-    return response
+    try:
+        key_expire = datetime.strptime(user_keys[username]["expire_timestamp"], "%Y-%m-%d %H:%M:%S.%f")
+    except KeyError:
+        user_keys[username] = {"key": secrets.token_hex(16), "expire_timestamp": (datetime.now() + timedelta(minutes=100)).strftime("%Y-%m-%d %H:%M:%S.%f")}
+    finally:
+        key_expire = datetime.strptime(user_keys[username]["expire_timestamp"], "%Y-%m-%d %H:%M:%S.%f")
+    print(key_expire, datetime.now())
+    if  key_expire < datetime.now():
+        user_keys[username]["key"] = secrets.token_hex(16)
+        user_keys[username]["expire_timestamp"] = (datetime.now() + timedelta(minutes=100)).strftime("%Y-%m-%d %H:%M:%S.%f")
+    
+    with open("user_keys.json", "w") as write_file:
+        json.dump(user_keys, write_file, indent=4)  # Add indentation for readability
+    return {"api_key": user_keys[username]["key"], "expires": user_keys[username]["expire_timestamp"]}
+
+def get_api_key(username: str, request_header_key:dict = Security(api_key_header)) -> dict:
+    global user_keys
+    print(request_header_key, user_keys)
+    try:
+        if request_header_key == user_keys[username]["key"]:
+            return {"user": "found", "key": "valid"}
+        else:    
+            raise HTTPException(status_code=401, detail="Invalid API Key")
+    except KeyError:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+@router_protected.get("/protected-endpoint/{username}")
+def protected_endpoint(
+    username: str,
+    valid: dict = Security(get_api_key)
+    ):
+    if valid:
+        with open("data_tasks.json") as read_file:
+                data_tasks = json.load(read_file)
+            
+        response = []
+        for task in data_tasks:
+            for task_key, task_value in task.items():
+                # print(f"task_key: {task_key}, task_value: {task_value}, api_key: {api_key}")
+                # Check if the task key starts with the API key prefix
+                if task_key.startswith(username):
+                    response.append(task_value)
+        return response
