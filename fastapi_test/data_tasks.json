@@ -9,5 +9,11 @@
     ],
     "damaa": [
         "default_new_task"
+    ],
+    "dama2d": [
+        "dama2d_default_new_task"
+    ],
+    "dama3d": [
+        "dama3d_default_new_task"
     ]
 }

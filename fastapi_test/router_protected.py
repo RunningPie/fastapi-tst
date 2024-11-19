@@ -21,13 +21,13 @@ def key_request(username: str) -> dict:
     try:
         key_expire = datetime.strptime(user_keys[username]["expire_timestamp"], "%Y-%m-%d %H:%M:%S.%f")
     except KeyError:
-        user_keys[username] = {"key": secrets.token_hex(16), "expire_timestamp": (datetime.now() + timedelta(minutes=100)).strftime("%Y-%m-%d %H:%M:%S.%f")}
+        user_keys[username] = {"key": secrets.token_hex(16) + "-" + secrets.token_hex(16), "expire_timestamp": (datetime.now() + timedelta(minutes=100)).strftime("%Y-%m-%d %H:%M:%S.%f")}
         data_tasks[username] = [username + "_default_new_task"]
     finally:
         key_expire = datetime.strptime(user_keys[username]["expire_timestamp"], "%Y-%m-%d %H:%M:%S.%f")
     print(key_expire, datetime.now())
     if  key_expire < datetime.now():
-        user_keys[username]["key"] = secrets.token_hex(16)
+        user_keys[username]["key"] = secrets.token_hex(16) + "-" + secrets.token_hex(16)
         user_keys[username]["expire_timestamp"] = (datetime.now() + timedelta(minutes=100)).strftime("%Y-%m-%d %H:%M:%S.%f")
     
     with open("user_keys.json", "w") as write_file:
