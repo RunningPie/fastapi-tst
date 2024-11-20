@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from router_member import router_member
 from router_protected import router_protected
+from router_oauth import router_oauth
 
 app = FastAPI()
 
@@ -11,3 +12,4 @@ async def hello() -> dict:
 
 app.include_router(router_member)
 app.include_router(router_protected)
+app.include_router(router_oauth)
