@@ -15,13 +15,7 @@ def get_supabase_client() -> Client:
     global _supabase_client
     if _supabase_client is None:
         try:
-            options = {
-                'auth': {
-                    'autoRefreshToken': True,
-                    'persistSession': True
-                }
-            }
-            _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY, options)
+            _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to connect to Supabase: {str(e)}")
     return _supabase_client
@@ -36,10 +30,7 @@ async def signup(
     
     try:
         client = get_supabase_client()
-        response = client.auth.sign_up({
-            "email": email,
-            "password": password
-        })
+        response = client.auth.sign_up({"email": email, "password": password})
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -54,10 +45,7 @@ async def login(
     
     try:
         client = get_supabase_client()
-        response = client.auth.sign_in_with_password({
-            "email": email,
-            "password": password
-        })
+        response = client.auth.sign_in_with_password({"email": email, "password": password})
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -66,9 +54,7 @@ async def login(
 async def github_login():
     try:
         client = get_supabase_client()
-        response = client.auth.sign_in_with_oauth({
-            "provider": 'github'
-        })
+        response = client.auth.sign_in_with_oauth({"provider": "github"})
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
